@@ -11,3 +11,14 @@ CREATE TABLE user (
     email       VARCHAR(255) NOT NULL,
     password    VARCHAR(255) NOT NULL
 );
+
+-- Create the user_session table
+CREATE TABLE user_session (
+    id INT PRIMARY KEY,
+    user_id VARCHAR(255) NOT NULL,
+    session_token VARCHAR(255) NOT NULL,
+    ip_address VARCHAR(255) NOT NULL,
+    user_agent VARCHAR(255) NOT NULL,
+    creation_time TIMESTAMP NOT NULL,
+    last_activity_time TIMESTAMP NOT NULL
+);
