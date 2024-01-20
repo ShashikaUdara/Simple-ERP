@@ -15,13 +15,16 @@ stop:
 	docker-compose down
 
 import:
-	@./nodb/import-db.sh
+	@./erpdb/import.sh
 
 drop:
-	@./nodb/drop-db.sh
+	@./erpdb/drop.sh
 
-db-user:
-	@./nodb/create-db-user.sh
+# db-user:
+# 	@./erpdb/create-db-user.sh
+
+permissions:
+	chmod 777 ./erpdb/import.sh ./erpdb/drop.sh
 
 prep:
 	sudo systemctl stop mysql
