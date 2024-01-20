@@ -21,9 +21,6 @@ services:
     container_name: erp-app
     build:
       context: .
-      dockerfile: Dockerfile
-      args:
-      - VCS=off
     ports:
       - "8080:8080"
     depends_on:
@@ -33,11 +30,6 @@ services:
     command: "air"
     restart:
       always
-    healthcheck:
-      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
 
 volumes:
   mysql-data:

@@ -1,0 +1,20 @@
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    username VARCHAR(255) NOT NULL UNIQUE,
+    phone_number VARCHAR(15),
+    street VARCHAR(255),
+    city VARCHAR(255),
+    state VARCHAR(50),
+    postal_code VARCHAR(20),
+    country VARCHAR(50),
+    profile_picture VARCHAR(255),
+    credit_card_number VARCHAR(20),
+    expiry_date VARCHAR(7),
+    cvv VARCHAR(4),
+    facebook_url VARCHAR(255),
+    twitter_url VARCHAR(255),
+    interests TEXT
+);
