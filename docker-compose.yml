@@ -1,0 +1,43 @@
+version: '3'
+services:
+  # MySQL database service
+  mysql:
+    container_name: erp-db
+    build:
+      context: .
+      dockerfile: Dockerfile.mysql  # Reference the renamed Dockerfile for MySQL
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: erp
+      MYSQL_USER: erpuser
+      MYSQL_PASSWORD: password
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  # Go application service
+  erp:
+    container_name: erp-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+      - VCS=off
+    ports:
+      - "8080:8080"
+    depends_on:
+      - mysql
+    volumes:
+      - .:/go/src/erp
+    command: "air"
+    restart:
+      always
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  mysql-data:
