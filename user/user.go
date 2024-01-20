@@ -130,7 +130,7 @@ func InsertUserData(user User) (int, error) {
 
 	hashed_password, err := HashPassword(user.Password)
 	if err != nil {
-		log.Fatalf("Error hasing the password: %v", err)
+		log.Fatalf("Error hashing the password: %v", err)
 		return -2, err
 	}
 
@@ -345,4 +345,70 @@ func GetUserSessionViaToken(token string) (*erpdb.UserSession, error) {
 	}
 
 	return &userSession, nil
+}
+
+func UpdateUserProfileData(user User, token string) (bool, error) {
+	session_data, err := GetUserSessionViaToken(token)
+	if err == db.ErrNoMoreRows {
+		return false, err
+	}
+
+	session, err := mysql.Open(erpdb.Settings)
+	if err != nil {
+		log.Fatalf("Error creating session: %v", err)
+		return false, err
+	}
+	defer session.Close()
+
+	table := session.Collection("user")
+
+	updateData := db.Cond{
+		"name": user.Name,
+	}
+
+	condition := db.Cond{"email": session_data.UserID}
+
+	err = table.Find(condition).Update(updateData)
+	if err != nil {
+		log.Fatalf("Error updating data in the table: %v", err)
+		return false, err
+	}
+
+	return true, nil
+}
+
+func UserPasswordReset(user User, token string) (bool, error) {
+	session_data, err := GetUserSessionViaToken(token)
+	if err == db.ErrNoMoreRows {
+		return false, err
+	}
+
+	session, err := mysql.Open(erpdb.Settings)
+	if err != nil {
+		log.Fatalf("Error creating session: %v", err)
+		return false, err
+	}
+	defer session.Close()
+
+	hashed_password, err := HashPassword(user.Password)
+	if err != nil {
+		log.Fatalf("Error hashing the password: %v", err)
+		return false, err
+	}
+
+	table := session.Collection("user")
+
+	updateData := db.Cond{
+		"password": hashed_password,
+	}
+
+	condition := db.Cond{"email": session_data.UserID}
+
+	err = table.Find(condition).Update(updateData)
+	if err != nil {
+		log.Fatalf("Error updating data in the table: %v", err)
+		return false, err
+	}
+
+	return true, nil
 }

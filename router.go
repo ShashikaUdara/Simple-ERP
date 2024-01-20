@@ -23,14 +23,12 @@ func CreateRouter() *mux.Router {
 	router.HandleFunc("/", HomeHandler).Methods("GET")
 	router.HandleFunc("/about", AboutHandler).Methods("GET")
 
-	// // Example of a route with a URL parameter
-	// router.HandleFunc("/user/{id}", GetUserHandler).Methods("GET")
-
 	// // user endpoints
 	router.HandleFunc("/api/user/register", user.CreateUserHandlar).Methods("POST")
 	router.HandleFunc("/api/user/login", user.UserLoginHandler).Methods("POST")
-	// router.HandleFunc("/api/user/register", user.RegisterUserHandler).Methods("POST")
 	router.HandleFunc("/api/user/logout", user.LogoutUserHandler).Methods("POST")
+	router.HandleFunc("/api/user/profile/update", user.UpdateUserProfileHandler).Methods("POST")
+	router.HandleFunc("/api/user/password/reset", user.UserPasswordResetHandler).Methods("POST")
 
 	// // product endpoints
 	// router.HandleFunc("/api/product/create", product.CreateProductHandler).Methods("POST")

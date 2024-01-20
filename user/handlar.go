@@ -24,6 +24,12 @@ type UserLogoutAPIResponse struct {
 	Success bool   `json:"success"`
 }
 
+type UserProfileUpdateAPIResponse struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+	Success bool   `json:"success"`
+}
+
 // user creation hanlar
 // name, email, password
 func CreateUserHandlar(w http.ResponseWriter, r *http.Request) {
@@ -192,4 +198,129 @@ func LogoutUserHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 // user edit profile data
-// user token
+// user token + profile data
+func UpdateUserProfileHandler(w http.ResponseWriter, r *http.Request) {
+	token, err := GetUserBearerToken(r)
+	if err != nil {
+		response := UserLogoutAPIResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalied user token",
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	isValid, err := VerifyUserSession(token)
+	if err != nil {
+		response := UserLogoutAPIResponse{
+			Status:  http.StatusInternalServerError,
+			Message: "Error verifiying user session",
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	if isValid {
+		var user User
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&user)
+		if err != nil {
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		isUpdated, err := UpdateUserProfileData(user, token)
+		if err != nil {
+			response := UserLogoutAPIResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Error updating the user profile",
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+
+		response := UserProfileUpdateAPIResponse{
+			Status:  http.StatusOK,
+			Message: "User profile updated successfully",
+			Success: isUpdated,
+		}
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	} else {
+		response := UserLoginAPIResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalied session",
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+}
+
+// user edit profile data
+// user token + new password
+func UserPasswordResetHandler(w http.ResponseWriter, r *http.Request) {
+	token, err := GetUserBearerToken(r)
+	if err != nil {
+		response := UserLogoutAPIResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalied user token",
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	isValid, err := VerifyUserSession(token)
+	if err != nil {
+		response := UserLogoutAPIResponse{
+			Status:  http.StatusInternalServerError,
+			Message: "Error verifiying user session",
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	if isValid {
+		var user User
+		decoder := json.NewDecoder(r.Body)
+		err := decoder.Decode(&user)
+		if err != nil {
+			http.Error(w, "Invalid request payload", http.StatusBadRequest)
+			return
+		}
+		defer r.Body.Close()
+
+		isUpdated, err := UserPasswordReset(user, token)
+		if err != nil {
+			response := UserLogoutAPIResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Error resetting the password",
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+
+		response := UserProfileUpdateAPIResponse{
+			Status:  http.StatusOK,
+			Message: "Password reset successful",
+			Success: isUpdated,
+		}
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	} else {
+		response := UserLoginAPIResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalied session",
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+}
