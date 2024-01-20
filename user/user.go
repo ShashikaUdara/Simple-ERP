@@ -1,6 +1,7 @@
 package user
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"math/rand"
@@ -28,6 +29,7 @@ type User struct {
 type UserSession struct {
 	UserID           string    `json:"user_id"`
 	SessionToken     string    `json:"session_token"`
+	IsActive         string    `json:"is_active"`
 	IPAddress        string    `json:"ip_address"`
 	UserAgent        string    `json:"user_agent"`
 	CreationTime     time.Time `json:"creation_time"`
@@ -259,6 +261,7 @@ func CreateUserSession(user User, r *http.Request) (string, error) {
 	data := erpdb.UserSession{
 		UserID:           user.Email,
 		SessionToken:     session_token,
+		IsActive:         true,
 		IPAddress:        clientInfo.IP,
 		UserAgent:        clientInfo.UserAgent,
 		CreationTime:     creation_time,
@@ -283,4 +286,63 @@ func CreateUserSession(user User, r *http.Request) (string, error) {
 	} else {
 		return "-3", err
 	}
+}
+
+func GetUserBearerToken(r *http.Request) (string, error) {
+	// Retrieve the Authorization header from the request
+	authHeader := r.Header.Get("Authorization")
+
+	// Check if the Authorization header is empty
+	if authHeader == "" {
+		return "", errors.New("authorization header is missing")
+	}
+
+	// Split the Authorization header to get the bearer token
+	authParts := strings.Fields(authHeader)
+	if len(authParts) != 2 || strings.ToLower(authParts[0]) != "bearer" {
+		return "", errors.New("invalid Authorization header format")
+	}
+
+	// Return the bearer token
+	return authParts[1], nil
+}
+
+func VerifyUserSession(token string) (bool, error) {
+
+	session_data, err := GetUserSessionViaToken(token)
+	if err == db.ErrNoMoreRows {
+		return false, err
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	if session_data.IsActive {
+		return true, nil
+	} else {
+		return false, nil
+	}
+}
+
+func GetUserSessionViaToken(token string) (*erpdb.UserSession, error) {
+	var userSession erpdb.UserSession
+
+	session, err := mysql.Open(erpdb.Settings)
+	if err != nil {
+		log.Fatalf("Error creating session: %v", err)
+		return nil, err
+	}
+	defer session.Close()
+
+	err = session.Collection("user_session").Find(db.Cond{"session_token": token}).One(&userSession)
+	if err != nil {
+		if err == db.ErrNoMoreRows {
+			return nil, err
+		}
+		log.Fatalf("Error retrieving user session: %v", err)
+		return nil, err
+	}
+
+	return &userSession, nil
 }

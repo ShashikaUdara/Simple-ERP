@@ -18,6 +18,12 @@ type UserLoginAPIResponse struct {
 	SessionToken string      `json:"session_token"`
 }
 
+type UserLogoutAPIResponse struct {
+	Status  int    `json:"status"`
+	Message string `json:"message"`
+	Success bool   `json:"success"`
+}
+
 // user creation hanlar
 // name, email, password
 func CreateUserHandlar(w http.ResponseWriter, r *http.Request) {
@@ -77,49 +83,6 @@ func CreateUserHandlar(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
-// user login handlar - session creation
-// email, password -> user token
-// func UserLoginHandler(w http.ResponseWriter, r *http.Request) {
-// 	var user User
-// 	decoder := json.NewDecoder(r.Body)
-// 	err := decoder.Decode(&user)
-// 	if err != nil {
-// 		response := UserRegisterAPIResponse{
-// 			Status:  http.StatusBadRequest,
-// 			Message: "Invalid request payload",
-// 		}
-// 		w.WriteHeader(http.StatusBadRequest)
-// 		json.NewEncoder(w).Encode(response)
-// 		return
-// 	}
-// 	defer r.Body.Close()
-
-// 	exists, err := IsUserExists(user.Email)
-// 	if err != nil {
-// 		response := UserRegisterAPIResponse{
-// 			Status:  http.StatusInternalServerError,
-// 			Message: "Error checking user existence",
-// 		}
-// 		w.WriteHeader(http.StatusInternalServerError)
-// 		json.NewEncoder(w).Encode(response)
-// 		return
-// 	}
-
-// 	if exists {
-// 		rspn, err := CreateUserToken(user)
-// 		if err != nil {
-// 			response := UserRegisterAPIResponse{
-// 				Status:  http.StatusInternalServerError,
-// 				Message: "Error inserting user data",
-// 			}
-// 			w.WriteHeader(http.StatusInternalServerError)
-// 			json.NewEncoder(w).Encode(response)
-// 			return
-// 		}
-// 	}
-
-// }
-
 func UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 	// Parse JSON request body into User struct
 	var user User
@@ -175,6 +138,58 @@ func UserLoginHandler(w http.ResponseWriter, r *http.Request) {
 
 // user logout handlar - session- deletion
 // user token
+func LogoutUserHandler(w http.ResponseWriter, r *http.Request) {
+	token, err := GetUserBearerToken(r)
+	if err != nil {
+		response := UserLogoutAPIResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalied user token",
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	isValid, err := VerifyUserSession(token)
+	if err != nil {
+		response := UserLogoutAPIResponse{
+			Status:  http.StatusInternalServerError,
+			Message: "Error verifiying user session",
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+
+	if isValid {
+		isLogout, err := UpdateUserSession(token)
+		if err != nil {
+			response := UserLogoutAPIResponse{
+				Status:  http.StatusInternalServerError,
+				Message: "Error logging out from the user session",
+			}
+			w.WriteHeader(http.StatusInternalServerError)
+			json.NewEncoder(w).Encode(response)
+			return
+		}
+
+		response := UserLogoutAPIResponse{
+			Status:  http.StatusOK,
+			Message: "Session deactivated successfully",
+			Success: isLogout,
+		}
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(response)
+	} else {
+		response := UserLoginAPIResponse{
+			Status:  http.StatusUnauthorized,
+			Message: "Invalied session",
+		}
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(response)
+		return
+	}
+}
 
 // user edit profile data
 // user token

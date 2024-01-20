@@ -13,6 +13,7 @@ type UserSession struct {
 	ID               int       `db:"id"`
 	UserID           string    `db:"user_id"`
 	SessionToken     string    `db:"session_token"`
+	IsActive         bool      `db:"is_active"`
 	IPAddress        string    `db:"ip_address"`
 	UserAgent        string    `db:"user_agent"`
 	CreationTime     time.Time `db:"creation_time"`

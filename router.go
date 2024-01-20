@@ -30,7 +30,7 @@ func CreateRouter() *mux.Router {
 	router.HandleFunc("/api/user/register", user.CreateUserHandlar).Methods("POST")
 	router.HandleFunc("/api/user/login", user.UserLoginHandler).Methods("POST")
 	// router.HandleFunc("/api/user/register", user.RegisterUserHandler).Methods("POST")
-	// router.HandleFunc("/api/user/logout", user.LogoutUserHandler).Methods("POST")
+	router.HandleFunc("/api/user/logout", user.LogoutUserHandler).Methods("POST")
 
 	// // product endpoints
 	// router.HandleFunc("/api/product/create", product.CreateProductHandler).Methods("POST")
